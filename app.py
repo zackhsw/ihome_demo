@@ -1,4 +1,4 @@
-from flask import Flask, current_app, url_for, redirect
+from flask import Flask, current_app, url_for, redirect, request
 from werkzeug.routing import BaseConverter
 
 app = Flask(__name__,
@@ -104,6 +104,16 @@ def index():
     # /send/13131313113
     return redirect(url)
 
+
+@app.route('/index',methods=["GET","POST"])
+def index():
+    # request中包含了前端发过来的所有请求数据
+    # 通过request.form 可以直接提取请求体中德表单格式的数据
+    #
+    # 通过get方法只能拿到多个同名参数的第一个值
+    name = request.form.get("name")
+    city = request.args.get("city")  # 链接url中请求参数的值
+    return "hello name=%" % name
 
 if __name__ == '__main__':
     # 通过url_map可以查看真个flask中路由信息
