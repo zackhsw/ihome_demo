@@ -9,7 +9,7 @@ def login():
     user_name = request.form.get("user_name")
     password = request.form.get("password")
     # 参数判断
-    if all([user_name, password]):
+    if not all([user_name, password]):
         resp = {
             "code": 1,
             "message": "invalid params"
