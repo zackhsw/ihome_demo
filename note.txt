@@ -1,0 +1,205 @@
+Flask Note
+	1.配置参数三种方式
+		1.使用配置文件
+		app.config.from_pyfile("config.cfg")
+
+		2.使用对象配置参数
+		class Config(object):
+			DEBUG = True
+			ITCAST = "python"
+		app.config.from_object(Config)
+
+		3.直接操作（针对配置参数少的时候）
+		app.config["DEBUG"] = True
+	
+	2.转换器
+		# @app.route('/goods/<int:goods_id>')
+		@app.route('/goods/<goods_id>')  # 不加转换器 默认是普通字符串规则 除了/的字符
+		def goods_detail(goods_id):
+			"""定义的视图函数"""
+			return "goods detail page:{}".format(goods_id)
+
+
+		# 1.自定义转换器
+		class MobileConverter(BaseConverter):
+			def __init__(self, url_map):
+				super(MobileConverter, self).__init__(url_map)
+				self.regex = r'1[345678]\d{9}'
+
+
+		class RegexConverter(BaseConverter):
+			def __init__(self, url_map, regex):
+				# 调用父类的初始化方法
+				super(RegexConverter, self).__init__(url_map)
+				# 将正则表达式的参数保存到对象的属性中，flask会使用这个属性来进行路由的正则匹配
+				self.regex = regex
+
+			def to_python(self, value):
+				"""value是在路径进行正则表达式匹配的时候提取的参数"""
+				print('to_python 方法被调用')
+				return 'assss--' + value
+
+			def to_url(self, value):
+				"""使用url_for的方法的时候被调用"""
+				return value
+
+
+		# 2.将自定义的转换器添加到flask的应用中
+		app.url_map.converters["re"] = RegexConverter
+		app.url_map.converters["mobile"] = MobileConverter
+
+
+		@app.route("/send/<re(r'1[234578]\d{9}'):mobile_num>")
+		# @app.route("/send/<mobile:mobile_num>")
+		def send_sms(mobile_num):
+			return "send sms to %s" % mobile_num
+			
+	3.request
+		1.request.form.data   请求表单中的数据
+		2.request.args.data   请求url中请求参数值
+		3.request.data
+	
+	4.上传文件
+		1.request.files
+		    file_obj = request.files.get('pic')
+			if file_obj is None:
+				# 表示没有发送文件
+				return "未上传文件"
+			file_obj.save("./pic")
+			
+			# try:
+			#     # 2.向文件写内容
+			#     data = file_obj.read()
+			#     f.write(data)
+			# except Exception:
+			#     pass
+			# finally:
+			#     # 3.关闭
+			#     f.close()
+			
+	5.with 上下文管理器
+		with open('./1.txt','wb') as f:
+			data = file_obj.read()
+			f.write(data)
+			
+		
+		# 上下文管理器
+		class Foo(object):
+			def __enter__(self):
+				"""进入with语句的时候被with调用"""
+				print("enter called")
+
+			def __exit__(self, exc_type, exc_val, exc_tb):  # 可以捕获到异常
+				"""离开with语句的时候被with调用"""
+				print('exc_type:%s' % exc_type)
+				print('exc_val:%s' % exc_val)
+				print('exc_tb:%s' % exc_tb)
+
+
+		with Foo() as foo:
+			print('hello context!')
+			
+		结果：	enter called
+				hello context!
+				exc_type:None
+				exc_val:None
+				exc_tb:None
+	6.abort
+		# 使用abort函数立即终止视图函数，并返回给前端特定信息
+        # 1.传递状态吗
+        abort(404)
+        # 2.传递响应体信息
+        resp = Response('login abort')
+        abort(resp)
+		
+		自定义异常处理，上面abort(404)此错误吗会显示下面函数返回的信息
+		@app.errorhandler(404)
+		def handle_404_error(err):
+			"""自定义处理错误方法"""
+			# 这个函数的返回值是前端用户看到的最终结果
+			return u"出现404错误，错误信息：%s" % err
+			
+	7.响应信息
+	·	@app.route("/index", methods=["GET"])
+		def login():
+			# 1.使用元组 返回自定义的信息
+			#         响应体     状态码    响应头
+			return "index page", 400, [("ITCAST", "python"), ("city", "beijing")]
+			# return "index page", 400, {"ITCAST":"python", "city":"beijing"}
+			
+			# 2.使用make_response来构造相应信息
+			resp = make_response("index page2")
+			resp.status = '996 icu' # 设置状态码
+			resp.headers['cit']='cd'  # 设置响应头
+			return resp
+			
+	8.json
+		1.序列化
+		json.dumps(字典)  # 其中dumps 中针对python的基本类型对象数据
+		2.反序列化
+		json.loads(字符串)
+		
+		@app.route("/index", methods=["GET"])
+		def login():
+			# json
+			data = {
+				'name': 'python',
+				'age': 18
+			}
+			return json.dumps(data), 200, {"Content-Type": "application/json"}
+			# 这样返回 比较繁琐 
+		    # jsonify帮助转换为json数据，并设置响应头Content-Type 为application/json
+			return jsonify(data)
+	
+	9.设置cookie
+		@app.route("/set_cookie", methods=["GET"])
+		def set_cookie():
+			resp = make_response("success")
+			# 设置cookie,默认有效期是临时cookie，浏览器关闭就失效
+			resp.set_cookie("itally", "996icu")
+			# max_age设置有效期，单位：秒
+			resp.set_cookie("i_tools", "python3.x", max_age=3600)
+			# resp.headers['Set-Cookie']="i_tools=python3.x.x; Expires=Wed, 24-Apr-2019 04:12:06 GMT; Max-Age=3600; Path=/"
+			return resp
+
+
+		@app.route('/get_cookie')
+		def get_cookie():
+			co = request.cookies.get('i_tools')
+			return co
+
+
+		@app.route('/delete_cookie')
+		def delete_cookie():
+			resp = make_response("del success")
+			# 删除cookies
+			resp.delete_cookie("i_tools")
+			return resp
+	
+	10.上下文对象
+		请求上下文
+		request和session
+		
+		应用上下文
+		current_app和g
+		
+		current_app: 表示当前运行程序文件的程序实例
+		g: 处理请求时，用于临时存储的对象，每次请求都会重设这个变量。
+		
+	11.请求钩子
+		1.before_first_request  第一次请求时运行
+		2.before_request  每次请求时运行
+		3.after_request  如没有未处理的异常，每次请求后运行
+		4.teardown_request	即使有异常抛出，每次请求后运行
+		
+	12.sqlalchemy
+		1.group by
+		db.session.query(User.role_id, func.count(User.role_id)).group_by(User.role_id)
+		
+		2. 更新
+		User.query.filter_by(name="zhou").update({"name":"pyton","age":12})
+		db.session.commit()
+
+	13.简单单元测试 其实使用assert
+        assert 断言  后面是一个表达式，如果表达式返回真，断言成功，程序继续执行
+        断言抛出异常AssertionError， 终止程序继续往下执行
