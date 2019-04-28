@@ -1,6 +1,7 @@
 import unittest
 
-from ihome_demo.42_author_book import db, Author, app
+from python_basic_demo.author_book import db, Author
+from python_basic_demo import app
 
 
 class DatabaseTest(unittest.TestCase):

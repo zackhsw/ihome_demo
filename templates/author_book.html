@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+<form method="post">
+    {{ form.author_name.label }}
+    <p>{{ form.author_name }}</p>
+    {% for msg in form.author_name.errors %}
+    <p> {{ msg }}</p>
+    {% enfor %}
+</form>
+
+<form method="post">
+    {{ form.book_name.label }}
+    <p>{{ form.book_name }}</p>
+    {% for msg in form.book_name.errors %}
+    <p> {{ msg }}</p>
+    {% enfor %}
+
+    {% form.submit %}
+</form>
+<hr/>
+<ul>
+    {% for author in authors %}
+        <li>作者：{{ author.name }}</li>
+        <ul>
+            {% for book in author.books %}
+                <li>书籍：{{ book.name }}</li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+</ul>
+</body>
+</html>

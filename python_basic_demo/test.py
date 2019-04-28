@@ -1,6 +1,6 @@
 import json
 import unittest
-from login import app
+from python_basic_demo.login import app
 
 
 class LoginTest(unittest.TestCase):

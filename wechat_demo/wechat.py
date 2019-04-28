@@ -2,7 +2,9 @@ import hashlib
 
 from flask import Flask, request, abort
 
-WECHAT_TOKEN = ""
+
+# secret_key = "2a79515d57232fc52322b6cbfb1e6ea9"
+WECHAT_TOKEN = "741852963"
 app = Flask(__name__)
 
 
