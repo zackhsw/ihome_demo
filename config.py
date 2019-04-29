@@ -4,7 +4,7 @@ import redis
 class Config(object):
     """配置信息"""
     SECRET_KEY = "ASDFSA234@#$dsg"
-    SQLALCHEMY_DATABASE_URI = "mysql://root:root123@127.0.0.1:3306/ihome"
+    SQLALCHEMY_DATABASE_URI = "pymysql+mysql://root:root123@127.0.0.1:3306/ihome"
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
     # redis

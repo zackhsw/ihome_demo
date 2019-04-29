@@ -5,3 +5,7 @@
 2.Flask-session
     文档连接：https://pythonhosted.org/Flask-Session/
     在配置类中添加相关参数。
+
+3.日志logging
+
+4.数据库表，根据页面逻辑，搜索条件，空间换时间便捷性 设计表。

@@ -1,9 +1,11 @@
+from logging.handlers import RotatingFileHandler
+
 import redis
+import logging
 from flask import Flask
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-from . import api_1_0
 
 from config import config_map
 
@@ -12,6 +14,15 @@ db = SQLAlchemy()
 
 # 创建redis连接对象
 redis_store = None
+csrf = CSRFProtect()
+
+# 设置日志的记录等级
+logging.basicConfig(level=logging.WARNING)
+file_log_handler = RotatingFileHandler(".\ihome\logs\log", maxBytes=1024 * 1024 * 100, backupCount=10)
+#                                 日志登级     输出日志信息文件名  行数    日志信息
+formatter = logging.Formatter('%(levelname)s %(filename)s:%(lineno)d %(message)s')
+file_log_handler.setFormatter(formatter)
+logging.getLogger().addHandler(file_log_handler)
 
 
 def create_app(config_name):
@@ -21,23 +32,24 @@ def create_app(config_name):
     :return:
     """
     app = Flask(__name__)
-    config_class = config_map.get(config_name)
-    app.config.from_object(config_class)
+    conf = config_map[config_name]
+    app.config.from_object(conf)
 
     # 使用app初始化db
     db.init_app(app)
 
     # 初始化redis
     global redis_store
-    redis_store = redis.StrictRedis(host=config_class.REDIS_HOST, post=config_class.REDIS_PORT)
+    redis_store = redis.StrictRedis(host=conf.REDIS_HOST, port=conf.REDIS_PORT)
 
     # 利用flask-session,将session数据保存到redis中
     Session(app)
 
     # 为flask补充csrf防护
-    CSRFProtect(app)
+    csrf.init_app(app)
 
     # 注册蓝图
+    from . import api_1_0
     app.register_blueprint(api_1_0.api, url_prefix="/api/v1.0")
 
     return app
