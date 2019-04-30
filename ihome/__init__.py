@@ -10,6 +10,8 @@ from flask_wtf import CSRFProtect
 from config import config_map
 
 # 数据库
+from ihome.utils.commons import ReConverter
+
 db = SQLAlchemy()
 
 # 创建redis连接对象
@@ -47,6 +49,9 @@ def create_app(config_name):
 
     # 为flask补充csrf防护
     csrf.init_app(app)
+
+    # 为flask添加自定义的转换器
+    app.url_map.converters['re'] = ReConverter
 
     # 注册蓝图
     from . import api_1_0
