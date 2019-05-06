@@ -9,3 +9,31 @@
 3.日志logging
 
 4.数据库表，根据页面逻辑，搜索条件，空间换时间便捷性 设计表。
+
+5.csrf防护机制
+    client --- post/put/delete ---> server
+
+    cookie:                     csrf验证机制：
+      csrf_token:xxx            从cookie中获取一个csrf_token,
+    body:                       从请求体重获取一个csrf_token的值，
+      csrf_token:xxx            如果两个值相同，则检验通过，可以进入到视图函数执行，
+                                如果不同，则检验失败，会向前端返回400的错误。
+    登录时
+    获得server的csrf_token
+
+                POST:
+                cookies:user_id=123
+                        csrf_token=xxx
+                body:to_user=hack
+                money:1000
+                csrf_token:xxx
+
+6.验证码
+    client                                   server                       redis
+    编号    ----发起获取图片验证码的请求--->   生成验证码图片，编号
+            <---返回验证码图片，编号----      将验证码的真实值和编号存到redis
+
+           ---发起获取短信验证码请求---->      验证图片验证码的正确性
+                携带参数：                   若正确，发送短信验证码
+                    用户填写的图片验证码
+                    图片验证码的编号
