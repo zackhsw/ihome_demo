@@ -6,8 +6,8 @@
 import random
 import string
 import os.path
-from cStringIO import StringIO
-
+# from cStringIO import StringIO  python3由io.StringIO取代
+from io import StringIO
 from PIL import Image
 from PIL import ImageFilter
 from PIL.ImageDraw import Draw
