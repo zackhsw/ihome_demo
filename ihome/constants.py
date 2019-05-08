@@ -1,0 +1,2 @@
+# 图片验证码redis有效期 180秒
+IMAGE_CODE_REDIS_EXPIRES = 180
