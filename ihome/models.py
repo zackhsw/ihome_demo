@@ -8,6 +8,7 @@ from ihome import constants
 
 class BaseModel(object):
     """模型基类，为每个模型补充创建时间与更新时间"""
+    __abstract__ = True  # 进行声明,防止这个类被当做表导入
 
     create_time = db.Column(db.DateTime, default=datetime.now)  # 记录的创建时间
     update_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)  # 记录的更新时间

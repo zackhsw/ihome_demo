@@ -2,7 +2,6 @@ from flask import logging, current_app
 
 from . import api
 
-
 @api.route('/index')
 def index():
     current_app.logger.error("xxx严重错误")  # 错误级别
