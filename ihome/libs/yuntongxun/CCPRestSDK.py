@@ -10,13 +10,15 @@
 #  in the file PATENTS.  All contributing project authors may
 #  be found in the AUTHORS file in the root of the source tree.
 
-import md5
+from hashlib import md5
 import base64
 import datetime
-import urllib2
+import urllib.request
 import json
-from xmltojson import xmltodict
-from xml.dom import minidom
+# from xmltojson import xmltodict
+# from xml.dom import minidom
+
+from ihome.libs.yuntongxun.xmltojson import xmltojson
 
 
 class REST:
@@ -92,7 +94,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
         req.add_header("Authorization", auth)
         # xml格式
@@ -107,7 +109,7 @@ class REST:
         data = ''
         req.add_data(body)
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
 
@@ -142,7 +144,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
         req.add_header("Authorization", auth)
         # xml格式
@@ -157,7 +159,7 @@ class REST:
         data = ''
         req.add_data(body)
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
 
@@ -192,7 +194,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
 
         req.add_header("Authorization", auth)
@@ -207,7 +209,7 @@ class REST:
         data = ''
         req.add_data(body)
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
 
@@ -243,7 +245,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
         req.add_header("Authorization", auth)
         # 创建包体
@@ -264,7 +266,7 @@ class REST:
         req.add_data(body)
         data = ''
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
 
@@ -311,7 +313,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
         req.add_header("Authorization", auth)
 
@@ -330,7 +332,7 @@ class REST:
         req.add_data(body)
         data = ''
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
 
@@ -371,7 +373,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
 
         req.add_header("Authorization", auth)
@@ -388,7 +390,7 @@ class REST:
         req.add_data(body)
         data = ''
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
 
@@ -425,7 +427,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         req.add_header("Accept", "application/xml")
         req.add_header("Content-Type", "application/xml;charset=utf-8")
         req.add_header("Authorization", auth)
@@ -440,7 +442,7 @@ class REST:
         req.add_data(body)
         data = ''
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
             xtj = xmltojson()
@@ -469,7 +471,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
         req.add_header("Authorization", auth)
 
@@ -484,7 +486,7 @@ class REST:
         req.add_data(body)
         data = ''
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
 
             res.close()
@@ -519,13 +521,13 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
         body = ''
         req.add_header("Authorization", auth)
         data = ''
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
 
@@ -560,7 +562,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
 
         req.add_header("Authorization", auth)
@@ -575,7 +577,7 @@ class REST:
         req.add_data(body)
         data = ''
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
 
@@ -610,13 +612,13 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
         body = ''
         req.add_header("Authorization", auth)
         data = ''
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
             res.close()
 
@@ -651,7 +653,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         self.setHttpHeader(req)
         req.add_header("Authorization", auth)
 
@@ -666,7 +668,7 @@ class REST:
         req.add_data(body)
         data = ''
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
 
             res.close()
@@ -702,7 +704,7 @@ class REST:
         # 生成auth
         src = self.AccountSid + ":" + self.Batch;
         auth = base64.encodestring(src).strip()
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         req.add_header("Authorization", auth)
         if self.BodyType == 'json':
             req.add_header("Accept", "application/json")
@@ -716,7 +718,7 @@ class REST:
         req.add_data(body)
 
         try:
-            res = urllib2.urlopen(req);
+            res = urllib.request.urlopen(req);
             data = res.read()
 
             res.close()
