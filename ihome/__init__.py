@@ -1,3 +1,4 @@
+import os
 from logging.handlers import RotatingFileHandler
 
 import redis
@@ -20,7 +21,7 @@ csrf = CSRFProtect()
 
 # 设置日志的记录等级
 logging.basicConfig(level=logging.WARNING)
-file_log_handler = RotatingFileHandler(".\ihome\logs\log", maxBytes=1024 * 1024 * 100, backupCount=10)
+file_log_handler = RotatingFileHandler(os.path.abspath(os.path.dirname(__file__))+"\logs\log", maxBytes=1024 * 1024 * 100, backupCount=10)
 #                                 日志登级     输出日志信息文件名  行数    日志信息
 formatter = logging.Formatter('%(levelname)s %(filename)s:%(lineno)d %(message)s')
 file_log_handler.setFormatter(formatter)
@@ -56,5 +57,9 @@ def create_app(config_name):
     # 注册蓝图
     from . import api_1_0
     app.register_blueprint(api_1_0.api, url_prefix="/api/v1.0")
+
+    # 注册提供静态文件的蓝图
+    from ihome import web_html
+    app.register_blueprint(web_html.html)
 
     return app

@@ -3,13 +3,13 @@
 from .CCPRestSDK import REST
 
 # 主帐号
-accountSid = '8aaf0708568d4143015697b0f4960888'
+accountSid = '8a216da86ab0b4d2016abfba0e0e0ce5'
 
 # 主帐号Token
-accountToken = '42d3191f0e6745d6a9ddc6c795da0bed'
+accountToken = 'da9fa102f4234b6cb39353c63dec1549'
 
 # 应用Id
-appId = '8aaf0708568d4143015697b0f56e088f'
+appId = '8a216da86ab0b4d2016abfba0e5b0ceb'
 
 # 请求地址，格式如下，不需要写http://
 serverIP = 'app.cloopen.com'
@@ -49,6 +49,7 @@ class CCP(object):
     def send_template_sms(self, to, datas, temp_id):
         """"""
         result = self.rest.sendTemplateSMS(to, datas, temp_id)
+        print('--===>',result,type(result))
         # for k, v in result.iteritems():
         #
         #     if k == 'templateSMS':
@@ -70,7 +71,7 @@ class CCP(object):
 
 if __name__ == '__main__':
     ccp = CCP()
-    ret = ccp.send_template_sms("18516952650", ["1234", "5"], 1)
+    ret = ccp.send_template_sms("18384291574", ["1234", "5"], 1)
     print(ret)
 
     

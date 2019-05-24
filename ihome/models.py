@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from datetime import datetime
-from . import db
+from  ihome import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from ihome import constants
 
@@ -80,6 +80,15 @@ class User(BaseModel, db.Model):
         }
         return auth_dict
 
+house_facility = db.Table(
+    "ih_house_facility",
+    db.Column("house_id", db.Integer, db.ForeignKey("ih_house_info.id"), primary_key=True),  # 房屋编号
+    db.Column("facility_id", db.Integer, db.ForeignKey("ih_facility_info.id"), primary_key=True)  # 设施编号
+)
+
+
+# 房屋设施表，建立房屋与设施的多对多关系
+
 
 class Area(BaseModel, db.Model):
     """城区"""
@@ -97,14 +106,6 @@ class Area(BaseModel, db.Model):
             "aname": self.name
         }
         return d
-
-
-# 房屋设施表，建立房屋与设施的多对多关系
-house_facility = db.Table(
-    "ih_house_facility",
-    db.Column("house_id", db.Integer, db.ForeignKey("ih_house_info.id"), primary_key=True),  # 房屋编号
-    db.Column("facility_id", db.Integer, db.ForeignKey("ih_facility_info.id"), primary_key=True)  # 设施编号
-)
 
 
 class House(BaseModel, db.Model):
@@ -182,7 +183,7 @@ class House(BaseModel, db.Model):
 
         # 评论信息
         comments = []
-        orders = Order.query.filter(Order.house_id == self.id, Order.status == "COMPLETE", Order.comment != None)\
+        orders = Order.query.filter(Order.house_id == self.id, Order.status == "COMPLETE", Order.comment != None) \
             .order_by(Order.update_time.desc()).limit(constants.HOUSE_DETAIL_COMMENT_DISPLAY_COUNTS)
         for order in orders:
             comment = {
@@ -204,6 +205,8 @@ class Facility(BaseModel, db.Model):
     name = db.Column(db.String(32), nullable=False)  # 设施名字
 
 
+
+
 class HouseImage(BaseModel, db.Model):
     """房屋图片"""
 
@@ -212,6 +215,8 @@ class HouseImage(BaseModel, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     house_id = db.Column(db.Integer, db.ForeignKey("ih_house_info.id"), nullable=False)  # 房屋编号
     url = db.Column(db.String(256), nullable=False)  # 图片的路径
+
+
 
 
 class Order(BaseModel, db.Model):
@@ -237,7 +242,7 @@ class Order(BaseModel, db.Model):
             "CANCELED",  # 已取消
             "REJECTED"  # 已拒单
         ),
-        default="WAIT_ACCEPT", index=True)    # 指明在mysql中这个字段建立索引，加快查询速度
+    default="WAIT_ACCEPT", index=True)    # 指明在mysql中这个字段建立索引，加快查询速度
     comment = db.Column(db.Text)  # 订单的评论信息或者拒单原因
     trade_no = db.Column(db.String(80))  # 交易的流水号 支付宝的
 
@@ -256,3 +261,34 @@ class Order(BaseModel, db.Model):
             "comment": self.comment if self.comment else ""
         }
         return order_dict
+
+
+if __name__ == '__main__':
+    user = User()
+    user.password="123"
+    print(user.password_hash)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

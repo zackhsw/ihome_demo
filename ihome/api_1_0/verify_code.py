@@ -5,7 +5,7 @@ from flask import current_app, jsonify, make_response, request
 
 from ihome.libs.yuntongxun.sms import CCP
 from ihome.models import User
-from ihome.utils.captcha import captcha
+from ihome.utils.captcha.captcha import captcha
 from ihome.utils.response_code import RET
 from . import api
 from ihome import redis_store, constants
@@ -59,7 +59,7 @@ def get_sms_code(mobile):
     # 业务逻辑处理
     # 从redis取出真实值的图片验证码
     try:
-        real_image_code = redis_store.get('image_code_%s' % image_code_id)
+        real_image_code = redis_store.get('image_code_%s' % image_code_id)  # 返回的类型 bytes
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="redis数据库异常")
@@ -69,7 +69,7 @@ def get_sms_code(mobile):
         return jsonify(errno=RET.NODATA, errmsg='图片验证码失败')
 
     # 与用户填写的值进行对比
-    if real_image_code.lower() != image_code.lower():
+    if str(real_image_code, encoding='utf8').lower() != image_code.lower():
         # 表示用户填写错误
         return jsonify(errno=RET.DATAERR, errmsg='图片验证码错误')
 
@@ -111,7 +111,7 @@ def get_sms_code(mobile):
     # 发送短信
     try:
         ccp = CCP()
-        result = ccp.send_template_sms(mobile, [sms_code, int(constants.SMS_CODE_REDIS_EXPIRES / 60), 1])
+        result = ccp.send_template_sms(mobile, [sms_code, int(constants.SMS_CODE_REDIS_EXPIRES / 60)], 1)
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.THIRDERR, errmsg="发送异常")

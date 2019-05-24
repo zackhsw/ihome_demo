@@ -1,9 +1,11 @@
+#coding:utf8
 import re
 
 from flask import request, jsonify, current_app, session
 from pymysql import IntegrityError
 
 from ihome import redis_store, db
+from ihome.constants import LOGIN_ERROR_MAX_TIMES, LOGIN_ERROR_FORBID_TIME
 from ihome.utils.response_code import RET
 from . import api, User
 
@@ -12,8 +14,8 @@ from . import api, User
 def register():
     """
     regiter
-    ÇëÇó²ÎÊı£ºÊÖ»úºÅ£¬ÃÜÂë£¬¶ÌĞÅÑéÖ¤Âë
-    ²ÎÊı¸ñÊ½£ºjson
+    è¯·æ±‚å‚æ•°ï¼šæ‰‹æœºå·ï¼Œå¯†ç ï¼ŒçŸ­ä¿¡éªŒè¯ç 
+    å‚æ•°æ ¼å¼ï¼šjson
     :return:
     """
     req_dict = request.get_json()
@@ -22,64 +24,135 @@ def register():
     password = req_dict.get('password')
     password2 = req_dict.get('password2')
 
-    # Ğ£Ñé²ÎÊı
-    if not all([mobile, sms_code, password]):
-        return jsonify(errno=RET.PARAMERR, errmsg="²ÎÊı²»ÍêÕû")
+    # æ ¡éªŒå‚æ•°
+    if not all([mobile,  password]):
+        return jsonify(errno=RET.PARAMERR, errmsg="å‚æ•°ä¸å®Œæ•´")
 
-    # ÅĞ¶ÏÊÖ»úºÅ¸ñÊ½
+    # åˆ¤æ–­æ‰‹æœºå·æ ¼å¼
     if not re.match(r"1[34578]\d{9}", mobile):
-        return jsonify(errno=RET.PARAMERR, errmsg='ÊÖ»úºÅ¸ñÊ½²»¶Ô')
+        return jsonify(errno=RET.PARAMERR, errmsg='æ‰‹æœºå·æ ¼å¼ä¸å¯¹')
 
     if password != password2:
-        return jsonify(errno=RET.PARAMERR, errmsg='Á½´ÎÃÜÂë²»¶Ô')
+        return jsonify(errno=RET.PARAMERR, errmsg='ä¸¤æ¬¡å¯†ç ä¸å¯¹')
 
-    # ´ÓredisÖĞÈ¡³ö¶ÌĞÅÑéÖ¤Âë
-    try:
-        real_sms_code = redis_store.get('sms_code_%s' % mobile)
-    except Exception as e:
-        current_app.logger.error(e)
-
-    # ÅĞ¶Ï¶ÌĞÅÑéÖ¤ÂëÊÇ·ñ¹ıÆÚ
-    if real_sms_code is None:
-        return jsonify(errno=RET.NODATA, errmsg='¶ÌĞÅÑéÖ¤ÂëÊ§Ğ§')
-
-    # É¾³ıredisÖĞ¶ÌĞÅÑéÖ¤Âë£¬·ÀÖ¹ÖØ¸´Ê¹ÓÃ
-    try:
-        redis_store.delete('sms_code_%s' % mobile)
-    except Exception as e:
-        current_app.logger.error(e)
-
-    # ÅĞ¶ÏÓÃ»§ÌîĞ´¶ÌĞÅÑéÖ¤ÂëµÄÕıÈ·ĞÔ
-    if real_sms_code != sms_code:
-        return jsonify(errno=RET.DATAERR, errmsg='¶ÌĞÅÑéÖ¤Âë´íÎó')
-    # ÅĞ¶ÏÓÃ»§µÄ¶îÊÖ»úºÅÊÇ·ñ×¢²á¹ı
+    # # ä»redisä¸­å–å‡ºçŸ­ä¿¡éªŒè¯ç 
+    # try:
+    #     real_sms_code = redis_store.get('sms_code_%s' % mobile)
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    #
+    # # åˆ¤æ–­çŸ­ä¿¡éªŒè¯ç æ˜¯å¦è¿‡æœŸ
+    # if real_sms_code is None:
+    #     return jsonify(errno=RET.NODATA, errmsg='çŸ­ä¿¡éªŒè¯ç å¤±æ•ˆ')
+    #
+    # # åˆ é™¤redisä¸­çŸ­ä¿¡éªŒè¯ç ï¼Œé˜²æ­¢é‡å¤ä½¿ç”¨
+    # try:
+    #     redis_store.delete('sms_code_%s' % mobile)
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    #
+    # # åˆ¤æ–­ç”¨æˆ·å¡«å†™çŸ­ä¿¡éªŒè¯ç çš„æ­£ç¡®æ€§
+    # if real_sms_code != sms_code:
+    #     return jsonify(errno=RET.DATAERR, errmsg='çŸ­ä¿¡éªŒè¯ç é”™è¯¯')
+    # åˆ¤æ–­ç”¨æˆ·çš„é¢æ‰‹æœºå·æ˜¯å¦æ³¨å†Œè¿‡
     # try:
     #     user = User.query.filter_by(mobile=mobile).first()
     # except Exception as e:
     #     current_app.logger.error(e)
-    #     return jsonify(errno=RET.DBERR, errmsg='Êı¾İ¿âÒì³£')
+    #     return jsonify(errno=RET.DBERR, errmsg='æ•°æ®åº“å¼‚å¸¸')
     # else:
     #     if user is not None:
-    #         return jsonify(errno=RET.DATAEXIST, errmsg='ÊÖ»úºÅÒÑ´æÔÚ')
-    # ±£´æÓÃ»§µÄ×¢²áÊı¾İµ½Êı¾İ¿âÖĞ
+    #         return jsonify(errno=RET.DATAEXIST, errmsg='æ‰‹æœºå·å·²å­˜åœ¨')
+    # ä¿å­˜ç”¨æˆ·çš„æ³¨å†Œæ•°æ®åˆ°æ•°æ®åº“ä¸­
     user = User(name=mobile, mobile=mobile)
     user.password = password
     try:
         db.session.add(user)
         db.session.commit()
     except IntegrityError as e:
-        # Êı¾İ¿â²Ù×÷´íÎóºóµÄ»Ø¹ö
+        # æ•°æ®åº“æ“ä½œé”™è¯¯åçš„å›æ»š
         db.session.rollback()
-        # ±íÊ¾ÊÖ»úºÅ³öÏÖÖØ¸´£¬¼´ÊÖ»ú×¢²á¹ı
+        # è¡¨ç¤ºæ‰‹æœºå·å‡ºç°é‡å¤ï¼Œå³æ‰‹æœºæ³¨å†Œè¿‡
         current_app.logger.error(e)
-        return jsonify(errno=RET.DATAEXIST, errmsg='ÊÖ»úºÅÒÑ´æÔÚ')
+        return jsonify(errno=RET.DATAEXIST, errmsg='æ‰‹æœºå·å·²å­˜åœ¨')
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg='Êı¾İ¿âÒì³£')
+        return jsonify(errno=RET.DBERR, errmsg='æ•°æ®åº“å¼‚å¸¸')
 
-    # ±£´æµÇÂ¼×´Ì¬sessionÖĞ
+    # ä¿å­˜ç™»å½•çŠ¶æ€sessionä¸­
     session['name'] = mobile
     session['mobile'] = mobile
     session['user_id'] = user.id
-    # ·µ»Ø½á¹û
-    return jsonify(errno=RET.OK, errmsg='×¢²á³É¹¦')
+    # è¿”å›ç»“æœ
+    return jsonify(errno=RET.OK, errmsg='æ³¨å†ŒæˆåŠŸ')
+
+
+@api.route("/sessions", methods=['POST'])
+def login():
+    """ç™»å½•
+    å‚æ•°ï¼šæ‰‹æœºå·ã€å¯†ç """
+    # è·å–å‚æ•°
+    req_dict = request.get_json()
+    mobile = req_dict.get('mobile')
+    password = req_dict.get('password')
+    # æ ¡éªŒå‚æ•°
+    # å‚æ•°å®Œæ•´æ ¡éªŒ
+    if not all([mobile, password]):
+        return jsonify(errno=RET.PARAMERR, errmsg='æ‰‹æœºå·æ ¼å¼é”™è¯¯')
+
+    # æ‰‹æœºå·æ ¼å¼
+    if not re.match(r'1[34578]\d{9}', mobile):
+        return jsonify(errno=RET.PARAMERR, errmsg='æ‰‹æœºå·æ ¼å¼é”™è¯¯')
+
+    # åˆ¤æ–­é”™è¯¯æ¬¡æ•°æ˜¯å¦è¶…è¿‡é™åˆ¶ï¼Œå¦‚æœè¶…è¿‡é™åˆ¶ï¼Œåˆ™è¿”å›
+    # redisè®°å½•ï¼š"access_nums_è¯·æ±‚çš„ip":æ¬¡æ•°
+    user_ip = request.remote_addr  # ç”¨æˆ·çš„ipåœ°å€
+    try:
+        access_nums = redis_store.get('access_nums_%s' % user_ip)
+    except Exception as e:
+        current_app.logger.error(e)
+    else:
+        if access_nums is not None and int(access_nums) > LOGIN_ERROR_MAX_TIMES:
+            return jsonify(errno=RET.REQERR, errmsg="é”™è¯¯æ¬¡æ•°è¿‡å¤šï¼Œè¯·ç¨åé‡è¯•")
+
+    # ä»æ•°æ®åº“ä¸­æ ¹æ®æ‰‹æœºå·æŸ¥è¯¢ç”¨æˆ·çš„æ•°æ®å¯¹è±¡
+    try:
+        user = User.query.filter_by(mobile=mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="è·å–ç”¨æˆ·ä¿¡æ¯å¤±è´¥")
+
+    # ç”¨æ•°æ®åº“çš„å¯†ç ä¸ç”¨æˆ·å¡«å†™çš„å¯†ç è¿›è¡Œå¯¹æ¯”éªŒè¯
+    if user is None or not user.check_password(password):
+        # å¦‚æœéªŒè¯å¤±è´¥ï¼Œè®°å½•é”™è¯¯æ¬¡æ•°ï¼Œè¿”å›ä¿¡æ¯
+        try:
+            redis_store.incr("access_num_%s" % user_ip)
+            redis_store.expire("access_num_%s" % user_ip, LOGIN_ERROR_FORBID_TIME)  # ä¸€å®šæ—¶é—´ æ¶ˆé™¤access_num_%s
+        except Exception as e:
+            current_app.logger.error(e)
+
+        return jsonify(errno=RET.DATAERR, errmsg="ç”¨æˆ·æˆ–å¯†ç é”™è¯¯")
+
+    # å¦‚æœéªŒè¯ç›¸åŒæˆåŠŸï¼Œä¿å­˜ç™»å½•çŠ¶æ€ï¼Œåœ¨sessionä¸­
+    session['name'] = user.name
+    session['mobile'] = user.mobile
+    session['user_id'] = user.id
+
+
+@api.route('/session', methods=['GET'])
+def check_login():
+    """æ£€æŸ¥ç™»å½•çŠ¶æ€"""
+    # å°è¯•ä»sessionä¸­è·å–ç”¨æˆ·çš„åå­—
+    name = session.get('name')
+    # å¦‚æœsessionä¸­æ•°æ®nameåå­—å­˜åœ¨ï¼Œåˆ™è¡¨ç¤ºç”¨æˆ·å·²ç™»å½•ï¼Œå¦åˆ™æœªç™»å½•
+    if name is not None:
+        return jsonify(errno=RET.OK, errmsg='true', data={'name': name})
+    else:
+        return jsonify(errno=RET.SESSIONERR, errmsg='false')
+
+
+@api.route('/session', methods=['DELETE'])
+def logout():
+    # æ¸…é™¤sessionæ•°æ®
+    session.clear()
+    return jsonify(errno=RET.OK, errmsg="OK")

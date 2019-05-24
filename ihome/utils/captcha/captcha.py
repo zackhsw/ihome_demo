@@ -7,7 +7,7 @@ import random
 import string
 import os.path
 # from cStringIO import StringIO  python3由io.StringIO取代
-from io import StringIO
+from io import *
 from PIL import Image
 from PIL import ImageFilter
 from PIL.ImageDraw import Draw
@@ -68,7 +68,7 @@ class Captcha(object):
 
     def initialize(self, width=200, height=75, color=None, text=None, fonts=None):
         # self.image = Image.new('RGB', (width, height), (255, 255, 255))
-        self._text = text if text else random.sample(string.uppercase + string.uppercase + '3456789', 4)
+        self._text = text if text else random.sample(string.ascii_uppercase + string.ascii_uppercase + '3456789', 4)
         self.fonts = fonts if fonts else \
             [os.path.join(self._dir, 'fonts', font) for font in ['Arial.ttf', 'Georgia.ttf', 'actionj.ttf']]
         self.width = width
@@ -205,9 +205,10 @@ class Captcha(object):
         image = self.curve(image)
         image = self.noise(image)
         image = self.smooth(image)
-        name = "".join(random.sample(string.lowercase + string.uppercase + '3456789', 24))
+        name = "".join(random.sample(string.ascii_lowercase + string.ascii_uppercase + '3456789', 24))
         text = "".join(self._text)
-        out = StringIO()
+        # out = StringIO()
+        out = BytesIO()
         image.save(out, format=fmt)
         if path:
             image.save(os.path.join(path, name), fmt)
@@ -218,6 +219,8 @@ class Captcha(object):
         return self.captcha("")
 
 captcha = Captcha.instance()
+# captcha = Captcha()
+# generate_captcha()
 
 if __name__ == '__main__':
     print(captcha.generate_captcha())
