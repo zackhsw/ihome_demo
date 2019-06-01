@@ -9,6 +9,7 @@ from ihome.utils.captcha.captcha import captcha
 from ihome.utils.response_code import RET
 from . import api
 from ihome import redis_store, constants
+from ihome.tasks.task_sms import send_sms
 
 
 @api.route("/image_codes/<image_code_id>")
@@ -80,7 +81,7 @@ def get_sms_code(mobile):
         current_app.logger.error(e)
     else:
         if send_flag is not None:
-            return jsonify(errno=RET.REQERR,errmsg='请求过于频繁，请60秒后重试')
+            return jsonify(errno=RET.REQERR, errmsg='请求过于频繁，请60秒后重试')
 
     # 删除redis中的图片验证码，防治用户使用同一个图片验证码 验证多次
     try:
@@ -109,15 +110,19 @@ def get_sms_code(mobile):
         return jsonify(errno=RET.DBERR, errmsg='保存短信验证码异常')
 
     # 发送短信
-    try:
-        ccp = CCP()
-        result = ccp.send_template_sms(mobile, [sms_code, int(constants.SMS_CODE_REDIS_EXPIRES / 60)], 1)
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.THIRDERR, errmsg="发送异常")
+    # try:
+    #     ccp = CCP()
+    #     result = ccp.send_template_sms(mobile, [sms_code, int(constants.SMS_CODE_REDIS_EXPIRES / 60)], 1)
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    #     return jsonify(errno=RET.THIRDERR, errmsg="发送异常")
+
+    # 使用celery异步发送短信,delay函数调用后立即返回
+    send_sms.delay(mobile, [sms_code, int(constants.SMS_CODE_REDIS_EXPIRES / 60)], 1)
 
     # 返回值
-    if result == 0:
-        return jsonify(errno=RET.OK, errmsg="发送成功")
-    else:
-        return jsonify(errno=RET.THIRDERR, errmsg="发送失败")
+    # if result == 0:
+    #     return jsonify(errno=RET.OK, errmsg="发送成功")
+    # else:
+    #     return jsonify(errno=RET.THIRDERR, errmsg="发送失败")
+    return jsonify(errno=RET.OK, errmsg="发送成功")

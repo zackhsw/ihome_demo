@@ -115,3 +115,22 @@
     文件存储解决方案：
     1.自己搭建文件存储系统    FastDFS 快速分布式文件存储系统     HDFS  hadoop分布式文件系统
     2.选择第三方服务   七牛云存储
+
+
+11.缓存机制
+    1.当请求的时候，首先从redis去取数据，如果没有，就去MySQL调用，并写入redis中。
+    2.为了同步，redis中数据必须设置有效期；如果从MySQL读取数据，也要重新写入redis中。
+
+
+12.前段js模版 art-template 共性能javascript模版引擎
+
+13.celery
+    任务队列是一种跨线程、跨机器工作的一种机制，任务队列包含称作任务的工作单元，有专门的工作进程持续不断的监视任务队列，并从中获得新的任务并处理
+    celery通过消息进行通信
+    clients发送消息到队列中，broker将队列中的信息派发给worker来处理
+
+    client     ---->      任务队列broker           <---- 任务处理者worker                            存放数据Beckend
+    (发布任务方flask)     （rabbitMQ redis）        （多进程(默认) 协程gevent greenlet）---(处理结果)---> MySQL redis
+
+    开启celery worker 命令：
+    celery -A 定义任务的python模块 worker -l
