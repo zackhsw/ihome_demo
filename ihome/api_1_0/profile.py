@@ -1,4 +1,4 @@
-# coding£ºutf8
+# coding:utf-8
 from flask import request, jsonify, current_app, g, session
 
 from ihome import db, constants
@@ -12,64 +12,64 @@ from ihome.utils.response_code import RET
 @login_required
 def set_user_avatar():
     """
-    ÉèÖÃÍ·Ïñ
-    ²ÎÊı£ºÍ¼Æ¬(¶àÃ½Ìå±íµ¥¸ñÊ½) ÓÃ»§id(g.user_id)
+    è®¾ç½®å¤´åƒ
+    å‚æ•°ï¼šå›¾ç‰‡(å¤šåª’ä½“è¡¨å•æ ¼å¼) ç”¨æˆ·id(g.user_id)
     :return:
     """
     user_id = g.user_id
-    # »ñÈ¡Í¼Æ¬
+    # è·å–å›¾ç‰‡
     image_file = request.files.get('avatar')
 
     if image_file is None:
-        return jsonify(errno=RET.PARAMERR, errmsg="Î´ÉÏ´«Í¼Æ¬")
+        return jsonify(errno=RET.PARAMERR, errmsg="æœªä¸Šä¼ å›¾ç‰‡")
 
     image_data = image_file.read()
 
-    # µ÷ÓÃÆßÅ£ÉÏ´«Í¼Æ¬
+    # è°ƒç”¨ä¸ƒç‰›ä¸Šä¼ å›¾ç‰‡
     try:
         file_name = storage(image_data)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.THIRDERR, errmsg="ÉÏ´«Í¼Æ¬Ê§°Ü")
+        return jsonify(errno=RET.THIRDERR, errmsg="ä¸Šä¼ å›¾ç‰‡å¤±è´¥")
 
-    # ±£´æÎÄ¼şÃûµ½Êı¾İ¿âÖĞ
+    # ä¿å­˜æ–‡ä»¶ååˆ°æ•°æ®åº“ä¸­
     try:
         User.query.filter_by(id=user_id).update({"avatar_url": file_name})
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="±£´æÍ¼Æ¬ĞÅÏ¢Ê§°Ü")
+        return jsonify(errno=RET.DBERR, errmsg="ä¿å­˜å›¾ç‰‡ä¿¡æ¯å¤±è´¥")
     avatar_url = constants.QINIU_URL_DOMAIN + file_name
-    return jsonify(errno=RET.OK, errmsg="±£´æ³É¹¦", data={'avatar_url': avatar_url})
+    return jsonify(errno=RET.OK, errmsg="ä¿å­˜æˆåŠŸ", data={'avatar_url': avatar_url})
 
 
 @api.route("/users/name", methods=['PUT'])
 @login_required
 def change_user_name():
-    """ĞŞ¸ÄÓÃ»§Ãû"""
-    # Ê¹ÓÃlogin_required×°ÊÎÆ÷ºó£¬¿ÉÒÔ´Óg¶ÔÏóÖĞ»ñÈ¡ÓÃ»§user_id
+    """ä¿®æ”¹ç”¨æˆ·å"""
+    # ä½¿ç”¨login_requiredè£…é¥°å™¨åï¼Œå¯ä»¥ä»gå¯¹è±¡ä¸­è·å–ç”¨æˆ·user_id
     user_id = g.user_id
 
-    # »ñÈ¡ÓÃ»§ÏëÒªÉèÖÃµÄÓÃ»§Ãû
+    # è·å–ç”¨æˆ·æƒ³è¦è®¾ç½®çš„ç”¨æˆ·å
     req_data = request.get_json()
     if not req_data:
-        return jsonify(errno=RET.PARAMERR, errmsg="²ÎÊı²»ÍêÕû")
+        return jsonify(errno=RET.PARAMERR, errmsg="å‚æ•°ä¸å®Œæ•´")
 
     name = req_data.get("name")
     if not name:
-        return jsonify(errno=RET.PARAMERR, errmsg="Ãû×Ö²»ÄÜÎª¿Õ")
+        return jsonify(errno=RET.PARAMERR, errmsg="åå­—ä¸èƒ½ä¸ºç©º")
 
-    # ±£´æÓÃ»§êÇ³Æname£¬²¢Í¬Ê±ÅĞ¶ÏnameÊÇ·ñÖØ¸´£¨ÀûÓÃÊı¾İ¿âµÄÎ¨Ò»Ë÷Òı£©
+    # ä¿å­˜ç”¨æˆ·æ˜µç§°nameï¼Œå¹¶åŒæ—¶åˆ¤æ–­nameæ˜¯å¦é‡å¤ï¼ˆåˆ©ç”¨æ•°æ®åº“çš„å”¯ä¸€ç´¢å¼•ï¼‰
     try:
         User.query.filter_by(id=user_id).update({"name": name})
         db.session.commit()
     except Exception as e:
         current_app.logger.error(e)
         db.session.rollback()
-        return jsonify(errno=RET.DBERR, errmsg="ÉèÖÃÓÃ»§´íÎó")
+        return jsonify(errno=RET.DBERR, errmsg="è®¾ç½®ç”¨æˆ·é”™è¯¯")
 
-    # ĞŞ¸ÄsessionÊı¾İÖĞname×Ö¶Î
+    # ä¿®æ”¹sessionæ•°æ®ä¸­nameå­—æ®µ
     session['name'] = name
     return jsonify(errno=RET.OK, errmsg="OK", data={"name": name})
 
@@ -77,17 +77,17 @@ def change_user_name():
 @api.route("/user", methods=["GET"])
 @login_required
 def get_user_profile():
-    """»ñÈ¡¸öÈËĞÅÏ¢"""
+    """è·å–ä¸ªäººä¿¡æ¯"""
     user_id = g.user_id
-    # ²éÑ¯Êı¾İ¿â»ñÈ¡¸öÈËĞÅÏ¢
+    # æŸ¥è¯¢æ•°æ®åº“è·å–ä¸ªäººä¿¡æ¯
     try:
         user = User.query.get(user_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="»ñÈ¡ÓÃ»§ĞÅÏ¢Ê§°Ü")
+        return jsonify(errno=RET.DBERR, errmsg="è·å–ç”¨æˆ·ä¿¡æ¯å¤±è´¥")
 
     if user is None:
-        return jsonify(errno=RET.NODATA, errmsg='ÎŞĞ§²Ù×÷')
+        return jsonify(errno=RET.NODATA, errmsg='æ— æ•ˆæ“ä½œ')
 
     return jsonify(errno=RET.OK, errmsg="OK", data=user.to_dict())
 
@@ -95,18 +95,18 @@ def get_user_profile():
 @api.route("/user/auth", methods=["GET"])
 @login_required
 def get_user_auth():
-    """»ñÈ¡ÓÃ»§µÄÊµÃûÈÏÖ¤ĞÅÏ¢"""
+    """è·å–ç”¨æˆ·çš„å®åè®¤è¯ä¿¡æ¯"""
     user_id = g.user_id
 
-    # ²éÑ¯Êı¾İ¿â»ñÈ¡¸öÈËĞÅÏ¢
+    # æŸ¥è¯¢æ•°æ®åº“è·å–ä¸ªäººä¿¡æ¯
     try:
         user = User.query.get(user_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="»ñÈ¡ÓÃ»§ĞÅÏ¢Ê§°Ü")
+        return jsonify(errno=RET.DBERR, errmsg="è·å–ç”¨æˆ·ä¿¡æ¯å¤±è´¥")
 
     if user is None:
-        return jsonify(errno=RET.NODATA, errmsg='ÎŞĞ§²Ù×÷')
+        return jsonify(errno=RET.NODATA, errmsg='æ— æ•ˆæ“ä½œ')
 
     return jsonify(errno=RET.OK, errmsg="OK", data=user.auth_to_dict())
 
@@ -114,22 +114,22 @@ def get_user_auth():
 @api.route("/users/auth", methods=["POST"])
 @login_required
 def set_user_auth():
-    """±£´æÊµÃûÈÏÖ¤ĞÅÏ¢"""
+    """ä¿å­˜å®åè®¤è¯ä¿¡æ¯"""
     user_id = g.user_id
 
-    # »ñÈ¡²ÎÊı
+    # è·å–å‚æ•°
     req_data = request.get_json()
     if not req_data:
-        return jsonify(errno=RET.PARAMERR, errmsg="²ÎÊı´íÎó")
+        return jsonify(errno=RET.PARAMERR, errmsg="å‚æ•°é”™è¯¯")
 
-    real_name = req_data.get("real_name")  # ÕæÊµĞÕÃû
-    id_card = req_data.get("id_card")  # Éí·İÖ¤ºÅ
+    real_name = req_data.get("real_name")  # çœŸå®å§“å
+    id_card = req_data.get("id_card")  # èº«ä»½è¯å·
 
-    # ²ÎÊıĞ£Ñé
+    # å‚æ•°æ ¡éªŒ
     if not all([real_name, id_card]):
-        return jsonify(errno=RET.PARAMERR, errmsg="²ÎÊı´íÎó")
+        return jsonify(errno=RET.PARAMERR, errmsg="å‚æ•°é”™è¯¯")
 
-    # ±£´æÓÃ»§µÄĞÕÃûÓëÉí·İÖ¤ºÅ
+    # ä¿å­˜ç”¨æˆ·çš„å§“åä¸èº«ä»½è¯å·
     try:
         User.query.filter_by(id=user_id, real_name=None, id_card=None).update(
             {"real_name": real_name, "id_card": id_card})
@@ -137,6 +137,6 @@ def set_user_auth():
     except Exception as e:
         current_app.logger.error(e)
         db.session.rollback()
-        return jsonify(errno=RET.DBERR, errmsg='±£´æÓÃ»§ÊµÃûĞÅÏ¢Ê§°Ü')
+        return jsonify(errno=RET.DBERR, errmsg='ä¿å­˜ç”¨æˆ·å®åä¿¡æ¯å¤±è´¥')
 
     return jsonify(errno=RET.OK, errmsg="OK")

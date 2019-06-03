@@ -55,7 +55,7 @@ def create_app(config_name):
     app.url_map.converters['re'] = ReConverter
 
     # 注册蓝图
-    from . import api_1_0
+    from ihome import api_1_0
     app.register_blueprint(api_1_0.api, url_prefix="/api/v1.0")
 
     # 注册提供静态文件的蓝图

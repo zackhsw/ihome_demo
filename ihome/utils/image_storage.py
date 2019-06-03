@@ -1,7 +1,8 @@
+# coding:utf-8
 from qiniu import Auth, put_file, etag
 import qiniu.config
 
-# ĞèÒªÌîĞ´ÄãµÄ Access Key ºÍ Secret Key
+# éœ€è¦å¡«å†™ä½ çš„ Access Key å’Œ Secret Key
 
 access_key = 'Access_Key'
 secret_key = 'Secret_Key'
@@ -9,24 +10,24 @@ secret_key = 'Secret_Key'
 
 def storage(file_data):
     """
-    ÉÏ´«ÎÄ¼şµ½ÆßÅ£
-    :param file_data:ÒªÉÏ´«µÄÎÄ¼şÊı¾İ
+    ä¸Šä¼ æ–‡ä»¶åˆ°ä¸ƒç‰›
+    :param file_data:è¦ä¸Šä¼ çš„æ–‡ä»¶æ•°æ®
     :return:
     """
-    # ¹¹½¨¼øÈ¨¶ÔÏó
+    # æ„å»ºé‰´æƒå¯¹è±¡
     q = Auth(access_key, secret_key)
 
-    # ÒªÉÏ´«µÄ¿Õ¼ä
+    # è¦ä¸Šä¼ çš„ç©ºé—´
     bucket_name = 'Bucket_Name'
 
-    # Éú³ÉÉÏ´« Token£¬¿ÉÒÔÖ¸¶¨¹ıÆÚÊ±¼äµÈ
+    # ç”Ÿæˆä¸Šä¼  Tokenï¼Œå¯ä»¥æŒ‡å®šè¿‡æœŸæ—¶é—´ç­‰
     token = q.upload_token(bucket_name, None, 3600)
 
     ret, info = put_file(token, None, file_data)
-    if info.status_code ==200:
+    if info.status_code == 200:
         return ret.get('key')
     else:
-        raise Exception("ÉÏ´«ÆßÅ£Ê§°Ü")
+        raise Exception("ä¸Šä¼ ä¸ƒç‰›å¤±è´¥")
     # print(info)
     # print("*" * 10)
     # print(ret)

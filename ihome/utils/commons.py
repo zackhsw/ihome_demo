@@ -1,9 +1,10 @@
+# coding:utf-8
 import functools
 
 from flask import session, jsonify, g
 from werkzeug.routing import BaseConverter
 
-# ¶¨ÒåÕıÔò×ª»»Æ÷
+# å®šä¹‰æ­£åˆ™è½¬æ¢å™¨
 from ihome.utils.response_code import RET
 
 
@@ -15,18 +16,18 @@ class ReConverter(BaseConverter):
         self.regex = regex
 
 
-# ¶¨ÒåµÄÑéÖ¤µÇÂ¼×´Ì¬µÄ×°ÊÎÆ÷
+# å®šä¹‰çš„éªŒè¯ç™»å½•çŠ¶æ€çš„è£…é¥°å™¨
 def login_required(view_func):
     @functools.wraps(view_func)
     def wrapper(*args, **kwargs):
-        # ÅĞ¶ÏÓÃ»§µÄµÇÂ¼×´Ì¬
+        # åˆ¤æ–­ç”¨æˆ·çš„ç™»å½•çŠ¶æ€
         user_id = session.get('user_id')
-        # Èç¹ûÓÃ»§ÊÇµÇÂ¼µÄ£¬Ö´ĞĞÊÓÍ¼º¯Êı
+        # å¦‚æœç”¨æˆ·æ˜¯ç™»å½•çš„ï¼Œæ‰§è¡Œè§†å›¾å‡½æ•°
         if user_id is not None:
-            # ½«user_id±£´æµ½g,ÔÚÊÓÍ¼º¯ÊıÖĞÍ¨¹ıg¶ÔÏó»ñÈ¡±£´æÊı¾İ
+            # å°†user_idä¿å­˜åˆ°g,åœ¨è§†å›¾å‡½æ•°ä¸­é€šè¿‡gå¯¹è±¡è·å–ä¿å­˜æ•°æ®
             g.user_id = user_id
             return view_func(*args, **kwargs)
         else:
-            # Èç¹ûÎ´µÇÂ¼£¬·µ»ØÎ´µÇÂ¼ĞÅÏ¢
-            return jsonify(errno=RET.SESSIONERR, errmsg='ÓÃ»§Î´µÇÂ¼')
+            # å¦‚æœæœªç™»å½•ï¼Œè¿”å›æœªç™»å½•ä¿¡æ¯
+            return jsonify(errno=RET.SESSIONERR, errmsg='ç”¨æˆ·æœªç™»å½•')
     return wrapper
