@@ -1,10 +1,12 @@
+# coding:utf-8
 import json
+from datetime import datetime
 
 from flask import current_app, jsonify, request, g, session
 
 from ihome import redis_store, constants, db
 from ihome.api_1_0 import api
-from ihome.models import Area, House, Facility, HouseImage, User
+from ihome.models import Area, House, Facility, HouseImage, User, Order
 from ihome.utils.commons import login_required
 from ihome.utils.image_storage import storage
 from ihome.utils.response_code import RET
@@ -12,34 +14,34 @@ from ihome.utils.response_code import RET
 
 @api.route('/areas')
 def get_area_info():
-    """»ñÈ¡³ÇÇø"""
+    """è·å–åŸåŒº"""
     try:
         resp_json = redis_store.get("area_info")
     except Exception as e:
         current_app.logger.error(e)
     else:
         if resp_json is not None:
-            # redisÓĞ»º´æÊı¾İ
+            # redisæœ‰ç¼“å­˜æ•°æ®
             current_app.logger.info("hit redis area_info")
             return resp_json, 200, {"Content-Type": "application/json"}
 
-    # ²éÑ¯Êı¾İ¿â£¬¶ÁÈ¡³ÇÇøĞÅÏ¢
+    # æŸ¥è¯¢æ•°æ®åº“ï¼Œè¯»å–åŸåŒºä¿¡æ¯
     try:
         area_li = Area.query.all()
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg='Êı¾İ¿âÒì³£')
+        return jsonify(errno=RET.DBERR, errmsg='æ•°æ®åº“å¼‚å¸¸')
 
     area_dict_li = []
-    # ½«¶ÔÏó×ª»»Îª×Öµä
+    # å°†å¯¹è±¡è½¬æ¢ä¸ºå­—å…¸
     for area in area_li:
         area_dict_li.append(area.to_dict())
 
-    # ½«Êı¾İ×ª»»Îªjson×Ö·û´®
+    # å°†æ•°æ®è½¬æ¢ä¸ºjsonå­—ç¬¦ä¸²
     resp_dict = dict(errno=RET.OK, errmsg="OK", data=area_dict_li)
     resp_json = json.dumps(resp_dict)
 
-    # ½«Êı¾İ±£´æµ½redisÖĞ
+    # å°†æ•°æ®ä¿å­˜åˆ°redisä¸­
     try:
         redis_store.setex("area_info", constants.AREA_INFO_REDIS_CACHE_EXPIRES, resp_json)
     except Exception as e:
@@ -47,54 +49,54 @@ def get_area_info():
 
     return resp_json, 200, {"Content-Type": "application/json"}
 
-    return jsonify(errno=RET.OK, errmsg='Êı¾İ¿âÒì³£', data=area_dict_li)
+    return jsonify(errno=RET.OK, errmsg='æ•°æ®åº“å¼‚å¸¸', data=area_dict_li)
 
 
 @api.route("/houses/info", methods=["POST"])
 @login_required
 def save_house_info():
-    """±£´æ·¿ÎİµÄ»ù±¾ĞÅÏ¢"""
-    # »ñÈ¡Êı¾İ
+    """ä¿å­˜æˆ¿å±‹çš„åŸºæœ¬ä¿¡æ¯"""
+    # è·å–æ•°æ®
     user_id = g.user_id
     house_data = request.get_json()
 
     title = house_data.get("title")
     price = house_data.get("price")
-    area_id = house_data.get("area_id")  # ·¿ÎİËùÔÚÇøÓò±àºÅ
+    area_id = house_data.get("area_id")  # æˆ¿å±‹æ‰€åœ¨åŒºåŸŸç¼–å·
     address = house_data.get("address")
     room_count = house_data.get("room_count")
-    acreage = house_data.get("acreage")  # ·¿ÎİÃæ»ı
+    acreage = house_data.get("acreage")  # æˆ¿å±‹é¢ç§¯
     unit = house_data.get("unit")
-    capacity = house_data.get("capacity")  # ·¿ÎİÈİÄÉÈËÊı
-    beds = house_data.get("beds")  # ·¿ÎİÎÔ´²ÊıÄ¿
-    deposit = house_data.get("deposit")  # Ñº½ğ
-    min_days = house_data.get("min_days")  # ×îĞ¡Èë×¡ÌìÊı
-    max_days = house_data.get("max_days")  # ×î´óÈë×¡ÌìÊı
+    capacity = house_data.get("capacity")  # æˆ¿å±‹å®¹çº³äººæ•°
+    beds = house_data.get("beds")  # æˆ¿å±‹å§åºŠæ•°ç›®
+    deposit = house_data.get("deposit")  # æŠ¼é‡‘
+    min_days = house_data.get("min_days")  # æœ€å°å…¥ä½å¤©æ•°
+    max_days = house_data.get("max_days")  # æœ€å¤§å…¥ä½å¤©æ•°
 
-    # Ğ£Ñé²ÎÊı
+    # æ ¡éªŒå‚æ•°
     if not all(
             [title, price, area_id, address, room_count, acreage, unit, capacity, beds, deposit, min_days, max_days]):
-        return jsonify(errno=RET.PARAMERR, errmsg="²ÎÊı²»ÍêÕû")
+        return jsonify(errno=RET.PARAMERR, errmsg="å‚æ•°ä¸å®Œæ•´")
 
-    # ÅĞ¶Ï½ğ¶îÊÇ·ñÕıÈ·
+    # åˆ¤æ–­é‡‘é¢æ˜¯å¦æ­£ç¡®
     try:
         price = int(float(price) * 100)
         deposit = int(float(deposit) * 100)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.PARAMERR, errmsg="²ÎÊı´íÎó")
+        return jsonify(errno=RET.PARAMERR, errmsg="å‚æ•°é”™è¯¯")
 
-    # ÅĞ¶Ï³ÇÇøidÊÇ·ñ´æÔÚ
+    # åˆ¤æ–­åŸåŒºidæ˜¯å¦å­˜åœ¨
     try:
         area = Area.query.get(area_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="Êı¾İÒì³£")
+        return jsonify(errno=RET.DBERR, errmsg="æ•°æ®å¼‚å¸¸")
 
     if area is None:
-        return jsonify(errno=RET.NODATA, errmsg="³ÇÇøĞÅÏ¢ÓĞÎó")
+        return jsonify(errno=RET.NODATA, errmsg="åŸåŒºä¿¡æ¯æœ‰è¯¯")
 
-    # ±£´æ·¿ÎİĞÅÏ¢
+    # ä¿å­˜æˆ¿å±‹ä¿¡æ¯
     house = House(
         user_id=user_id,
         area_id=area_id,
@@ -111,20 +113,20 @@ def save_house_info():
         max_days=max_days
     )
 
-    # ´¦Àí·¿ÎİµÄÉèÊ©ĞÅÏ¢
+    # å¤„ç†æˆ¿å±‹çš„è®¾æ–½ä¿¡æ¯
     facility_ids = house_data.get("facility")
 
-    # Èç¹ûÓÃ»§¹´Ñ¡ÁËÉèÊ©ĞÅÏ¢£¬ÔÚ±£´æÊı¾İ¿â
+    # å¦‚æœç”¨æˆ·å‹¾é€‰äº†è®¾æ–½ä¿¡æ¯ï¼Œåœ¨ä¿å­˜æ•°æ®åº“
     if facility_ids:
         try:
             facilites = Facility.query.filter(Facility.id.in_(facility_ids)).all()
         except Exception as e:
             current_app.logger.error(e)
-            return jsonify(errno=RET.DBERR, errmsg="Êı¾İ¿âÒì³£")
+            return jsonify(errno=RET.DBERR, errmsg="æ•°æ®åº“å¼‚å¸¸")
 
         if facilites:
-            # ±íÊ¾ÓĞºÏ·¨µÄÉèÊ©Êı¾İ
-            # ±£´æÉèÊ©Êı¾İ
+            # è¡¨ç¤ºæœ‰åˆæ³•çš„è®¾æ–½æ•°æ®
+            # ä¿å­˜è®¾æ–½æ•°æ®
             house.facilities = facilites
 
     try:
@@ -133,7 +135,7 @@ def save_house_info():
     except Exception as e:
         current_app.logger.error(e)
         db.session.rollback()
-        return jsonify(errno=RET.DBERR, errmsg="±£´æÊı¾İÊ§°Ü")
+        return jsonify(errno=RET.DBERR, errmsg="ä¿å­˜æ•°æ®å¤±è´¥")
 
     return jsonify(errno=RET.Ok, errmsg="OK", data={"house_id": house.id})
 
@@ -141,38 +143,38 @@ def save_house_info():
 @api.route("/houses/image", methods=["POST"])
 @login_required
 def save_house_image():
-    """±£´æ·¿ÎİµÄÍ¼Æ¬
-    ²ÎÊı Í¼Æ¬ ·¿ÎİµÄid
+    """ä¿å­˜æˆ¿å±‹çš„å›¾ç‰‡
+    å‚æ•° å›¾ç‰‡ æˆ¿å±‹çš„id
     """
     image_file = request.files.get("house_image")
     house_id = request.form.get("house_id")
 
     if not all([image_file, house_id]):
-        return jsonify(errno=RET.PARAMERR, errmsg="²ÎÊı´íÎó")
+        return jsonify(errno=RET.PARAMERR, errmsg="å‚æ•°é”™è¯¯")
 
-    # ÅĞ¶Ïhouse_idÕıÈ·ĞÔ
+    # åˆ¤æ–­house_idæ­£ç¡®æ€§
     try:
         house = House.query.get(house_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="Êı¾İ¿âÒì³£")
+        return jsonify(errno=RET.DBERR, errmsg="æ•°æ®åº“å¼‚å¸¸")
 
     if house is None:
-        return jsonify(errno=RET.NODATA, errmsg="·¿Îİ²»´æÔÚ")
+        return jsonify(errno=RET.NODATA, errmsg="æˆ¿å±‹ä¸å­˜åœ¨")
 
     image_data = image_file.read()
-    # ±£´æÍ¼Æ¬µ½ÆßÅ£ÔÆÖĞ
+    # ä¿å­˜å›¾ç‰‡åˆ°ä¸ƒç‰›äº‘ä¸­
     try:
         file_name = storage(image_data)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.THIRDERR, errmsg="±£´æÍ¼Æ¬Òì³£")
+        return jsonify(errno=RET.THIRDERR, errmsg="ä¿å­˜å›¾ç‰‡å¼‚å¸¸")
 
-    # ±£´æÍ¼Æ¬ĞÅÏ¢µ½Êı¾İ¿âÖĞ
+    # ä¿å­˜å›¾ç‰‡ä¿¡æ¯åˆ°æ•°æ®åº“ä¸­
     house_image = HouseImage(house_id=house_id, url=file_name)
     db.session.add(house_image)
 
-    # ´¦Àí·¿ÎİµÄÖ÷Í¼Æ¬
+    # å¤„ç†æˆ¿å±‹çš„ä¸»å›¾ç‰‡
     if not house.index_image_url:
         house.index_image_url = file_name
         db.session.add(house)
@@ -182,7 +184,7 @@ def save_house_image():
     except Exception as e:
         current_app.logger.error(e)
         db.session.rollback()
-        return jsonify(errno=RET.DBERR, errmsg="±£´æÍ¼Æ¬Êı¾İÒì³£")
+        return jsonify(errno=RET.DBERR, errmsg="ä¿å­˜å›¾ç‰‡æ•°æ®å¼‚å¸¸")
 
     image_url = constants.QINIU_DOMAIN + file_name
     return jsonify(errno=RET.OK, errmsg="OK", data={"image_url": image_url})
@@ -191,7 +193,7 @@ def save_house_image():
 @api.route("/user/houses", methods=["GET"])
 @login_required
 def get_user_houses():
-    """»ñÈ¡·¿¶«·¢²¼µÄ·¿Ô´ĞÅÏ¢ÌõÄ¿"""
+    """è·å–æˆ¿ä¸œå‘å¸ƒçš„æˆ¿æºä¿¡æ¯æ¡ç›®"""
     user_id = g.user_id
 
     try:
@@ -199,9 +201,9 @@ def get_user_houses():
         houses = user.houses
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="»ñÈ¡Êı¾İÊ§°Ü")
+        return jsonify(errno=RET.DBERR, errmsg="è·å–æ•°æ®å¤±è´¥")
 
-    # ½«²éµ½µÄ·¿ÎİĞÅÏ¢×ª»»Îª×Öµä´æ·Åµ½ÁĞ±íÖĞ
+    # å°†æŸ¥åˆ°çš„æˆ¿å±‹ä¿¡æ¯è½¬æ¢ä¸ºå­—å…¸å­˜æ”¾åˆ°åˆ—è¡¨ä¸­
     houses_list = []
     if houses:
         for house in houses:
@@ -211,8 +213,8 @@ def get_user_houses():
 
 @api.route("/houses/index", methods=["GET"])
 def get_house_index():
-    """»ñÈ¡Ö÷Ò³»ÃµÆÆ¬Õ¹Ê¾µÄ·¿Îİ»ù±¾ĞÅÏ¢"""
-    # ´Ó»º´æÖĞ³¢ÊÔ»ñÈ¡Êı¾İ
+    """è·å–ä¸»é¡µå¹»ç¯ç‰‡å±•ç¤ºçš„æˆ¿å±‹åŸºæœ¬ä¿¡æ¯"""
+    # ä»ç¼“å­˜ä¸­å°è¯•è·å–æ•°æ®
     try:
         ret = redis_store.get("home_page_data")
     except Exception as e:
@@ -221,27 +223,27 @@ def get_house_index():
 
     if ret:
         current_app.logger.info("hit house index info redis")
-        # ÒòÎªredisÖĞ±£´æµÄÊÇjson×Ö·û´®£¬ËùÒÔÖ±½Ó½øĞĞ×Ö·û´®Æ´½Ó·µ»Ø
+        # å› ä¸ºredisä¸­ä¿å­˜çš„æ˜¯jsonå­—ç¬¦ä¸²ï¼Œæ‰€ä»¥ç›´æ¥è¿›è¡Œå­—ç¬¦ä¸²æ‹¼æ¥è¿”å›
         return '{"errno":0, "errmsg":"OK", "data":%s}' % ret, 200, {"Content-Type": "application/json"}
     else:
         try:
-            # ²éÑ¯Êı¾İ¿â£¬·µ»Ø·¿Îİ¶©µ¥ÊıÄ¿×î¶àµÄ5ÌõÊı¾İ
+            # æŸ¥è¯¢æ•°æ®åº“ï¼Œè¿”å›æˆ¿å±‹è®¢å•æ•°ç›®æœ€å¤šçš„5æ¡æ•°æ®
             houses = House.query.order_by(House.order_count.desc()).limit(constants.HOME_PAGE_MAX_HOUSES)
         except Exception as e:
             current_app.logger.error(e)
-            return jsonify(errno=RET.DBERR, errmsg="²éÑ¯Êı¾İÊ§°Ü")
+            return jsonify(errno=RET.DBERR, errmsg="æŸ¥è¯¢æ•°æ®å¤±è´¥")
 
         if not houses:
-            return jsonify(errno=RET.NODATA, errmsg="²éÑ¯ÎŞÊı¾İ")
+            return jsonify(errno=RET.NODATA, errmsg="æŸ¥è¯¢æ— æ•°æ®")
 
         houses_list = []
         for house in houses:
-            # Èç¹û·¿ÎİÎ´ÉèÖÃÖ÷Í¼Æ¬£¬ÔòÌø¹ı
+            # å¦‚æœæˆ¿å±‹æœªè®¾ç½®ä¸»å›¾ç‰‡ï¼Œåˆ™è·³è¿‡
             if not house.index_image_url:
                 continue
             houses_list.append(house.to_basic_dict())
 
-        # ½«Êı¾İ×ª»»Îªjson£¬²¢±£´æµ½redis»º´æ
+        # å°†æ•°æ®è½¬æ¢ä¸ºjsonï¼Œå¹¶ä¿å­˜åˆ°redisç¼“å­˜
         json_houses = json.dumps(houses_list)  # "[{},{},{}]"
         try:
             redis_store.setex("home_page_data", constants.HOME_PAGE_DATA_REDIS_EXPIRES, json_houses)
@@ -253,17 +255,17 @@ def get_house_index():
 
 @api.route("/houses/<int:house_id>", methods=["GET"])
 def get_house_detail(house_id):
-    """»ñÈ¡·¿ÎİÏêÇé"""
-    # Ç°¶ËÔÚ·¿ÎİÏêÇéÒ³ÃæÕ¹Ê¾Ê±£¬Èç¹ûä¯ÀÀÒ³ÃæµÄÓÃ»§²»ÊÇ¸Ã·¿ÎİµÄ·¿¶«£¬ÔòÕ¹Ê¾Ô¤¶¨°´Å¥£¬·ñÔò²»Õ¹Ê¾£¬
-    # ËùÒÔĞèÒªºó¶Ë·µ»ØµÇÂ¼ÓÃ»§µÄuser_id
-    # ³¢ÊÔ»ñÈ¡ÓÃ»§µÇÂ¼µÄĞÅÏ¢£¬ÈôµÇÂ¼£¬Ôò·µ»Ø¸øÇ°¶ËµÇÂ¼ÓÃ»§µÄuser_id£¬·ñÔò·µ»Øuser_id=-1
+    """è·å–æˆ¿å±‹è¯¦æƒ…"""
+    # å‰ç«¯åœ¨æˆ¿å±‹è¯¦æƒ…é¡µé¢å±•ç¤ºæ—¶ï¼Œå¦‚æœæµè§ˆé¡µé¢çš„ç”¨æˆ·ä¸æ˜¯è¯¥æˆ¿å±‹çš„æˆ¿ä¸œï¼Œåˆ™å±•ç¤ºé¢„å®šæŒ‰é’®ï¼Œå¦åˆ™ä¸å±•ç¤ºï¼Œ
+    # æ‰€ä»¥éœ€è¦åç«¯è¿”å›ç™»å½•ç”¨æˆ·çš„user_id
+    # å°è¯•è·å–ç”¨æˆ·ç™»å½•çš„ä¿¡æ¯ï¼Œè‹¥ç™»å½•ï¼Œåˆ™è¿”å›ç»™å‰ç«¯ç™»å½•ç”¨æˆ·çš„user_idï¼Œå¦åˆ™è¿”å›user_id=-1
     user_id = session.get("user_id", "-1")
 
-    # Ğ£Ñé²ÎÊı
+    # æ ¡éªŒå‚æ•°
     if not house_id:
-        return jsonify(errno=RET.PARAMERR, errmsg="²ÎÊıÈ·Êµ")
+        return jsonify(errno=RET.PARAMERR, errmsg="å‚æ•°ç¡®å®")
 
-    # ÏÈ´Óredis»º´æÖĞ»ñÈ¡ĞÅÏ¢
+    # å…ˆä»redisç¼“å­˜ä¸­è·å–ä¿¡æ¯
     try:
         ret = redis_store.get("house_info_%s" % house_id)
     except Exception as e:
@@ -274,24 +276,24 @@ def get_house_detail(house_id):
         return '{"errno":"0", "errmsg":"OK", "data":{"user_id":%s, "house":%s}}' % (user_id, ret), \
                200, {"Content-Type": "application/json"}
 
-    # ²éÑ¯Êı¾İ¿â
+    # æŸ¥è¯¢æ•°æ®åº“
     try:
         house = House.query.get(house_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="²éÑ¯Êı¾İÊ§°Ü")
+        return jsonify(errno=RET.DBERR, errmsg="æŸ¥è¯¢æ•°æ®å¤±è´¥")
 
     if not house:
-        return jsonify(errno=RET.NODATA, errmsg="·¿Îİ²»´æÔÚ")
+        return jsonify(errno=RET.NODATA, errmsg="æˆ¿å±‹ä¸å­˜åœ¨")
 
-    # ½«·¿Îİ¶ÔÏóÊı¾İ×ª»»Îª×Öµä
+    # å°†æˆ¿å±‹å¯¹è±¡æ•°æ®è½¬æ¢ä¸ºå­—å…¸
     try:
         house_data = house.to_full_dict()
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DATAERR, errmsg="Êı¾İ³ö´í")
+        return jsonify(errno=RET.DATAERR, errmsg="æ•°æ®å‡ºé”™")
 
-    # ´æÈëµ½redisÖĞ
+    # å­˜å…¥åˆ°redisä¸­
     json_house = json.dumps(house_data)
     try:
         redis_store.setex("house_info_%s" % house_id, constants.HOUSE_DETAIL_REDIS_EXPIRE_SECOND, json_house)
@@ -301,3 +303,130 @@ def get_house_detail(house_id):
     resp = '{"errno":"0", "errmsg":"OK", "data":{"user_id":%s, "house":%s}}' % (user_id, json_house), \
            200, {"Content-Type": "application/json"}
     return resp
+
+
+# GET /api/v1.0/houses?sd=20191201&ed=20191204&aid=10&sk=new&p=1
+@api.route("/houses")
+def get_house_list():
+    """è·å–æˆ¿å±‹çš„åˆ—è¡¨ä¿¡æ¯ ç´¢å¼•é¡µé¢"""
+    start_date = request.args.get("sd", "")
+    end_date = request.args.get("ed", "")
+    area_id = request.args.get("aid", "")
+    sort_key = request.args.get("sk", "new")
+    page = request.args.get("p")
+
+    # å¤„ç†æ—¶é—´
+    try:
+        if start_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        if end_date:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
+        if start_date and end_date:
+            assert start_date <= end_date
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="æ—¥æœŸå‚æ•°æœ‰è¯¯")
+
+    # åˆ¤æ–­åŒºåŸŸid
+    if area_id:
+        try:
+            area = Area.query.get(area_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.PARAMERR, errmsg="åŒºåŸŸå‚æ•°æœ‰è¯¯")
+
+    # å¤„ç†é¡µæ•° ï¼Ÿï¼Ÿè¿™ä¸ªå¹²ï¼
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = 1
+
+
+    # è·å–ç¼“å­˜æ•°é‡
+    redis_key = "house_%s_%s_%s_%s" % (start_date, end_date, area_id, sort_key)
+    try:
+        resp_json = redis_store.hget(redis_key, page)
+    except Exception as e:
+        current_app.logger.error(e)
+    else:
+        if resp_json:
+            return resp_json, 200, {"Content-type": "application/json"}
+
+    # è¿‡æ»¤æ¡ä»¶çš„å‚æ•°åˆ—è¡¨å®¹å™¨
+    filter_params = []
+
+    # å¡«å……è¿‡æ»¤å‚æ•°
+    conflict_orders = None
+    try:
+        if start_date and end_date:
+            # æŸ¥è¯¢å†²çªçš„è®¢å•
+            conflict_orders = Order.query.filter(Order.begin_date <= end_date, Order.end_date >= start_date).all()
+        elif start_date:
+            conflict_orders = Order.query.filter(Order.end_date >= start_date).all()
+        elif end_date:
+            conflict_orders = Order.query.filter(Order.begin_date <= end_date).all()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="æ•°æ®åº“å¼‚å¸¸")
+
+    if conflict_orders:
+        # ä»è®¢å•ä¸­è·å–å†²çªçš„æˆ¿å±‹id
+        conflict_house_ids = [order.house_id for order in conflict_orders]
+        # å¦‚æœå†²çªçš„æˆ¿å±‹idä¸ä¸ºç©ºï¼Œå‘æŸ¥è¯¢å‚æ•°ä¸­æ·»åŠ æ¡ä»¶
+        if conflict_house_ids:
+            filter_params.append(House.id.notin_(conflict_house_ids))
+
+    # åŒºåŸŸ
+    if area_id:
+        filter_params.append(House.area_id == area_id)
+
+    # æŸ¥è¯¢æ•°æ®åº“
+    # è¡¥å……æ’åº
+    if sort_key == "booking":
+        house_query = House.query.filter(*filter_params).order_by(House.order_count.desc())
+    elif sort_key == "price-inc":
+        house_query = House.query.filter(*filter_params).order_by(House.price.asc())
+    elif sort_key == "price-des":
+        house_query = House.query.filter(*filter_params).order_by(House.price.desc())
+    else:  # æ–°æ—§
+        house_query = House.query.filter(*filter_params).order_by(House.create_time.desc())
+
+    # å¤„ç†åˆ†é¡µ
+    try:
+        page_obj = house_query.query.paginate(page=page, per_page=constants.HOUSE_LIST_PAGE_CAPACITY, error_out=False)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="æ•°æ®åº“å¼‚å¸¸")
+
+    # è·å–é¡µé¢æ•°æ®
+    house_li = page_obj.items
+    houses = []
+    for house in house_li:
+        houses.append(house.to_basic_dict())
+    # è·å–æ€»é¡µæ•°
+    total_page = page_obj.pages
+
+    resp_dict = dict(errno=RET.OK, errmsg="OK", data={"total_page": total_page, "houses": houses, "current_page": page})
+    resp_json = json.dumps(resp_dict)
+
+    if page <= total_page:
+        # è®¾ç½®ç¼“å­˜æ•°æ®
+        redis_key = "house_%s_%s_%s_%s" % (start_date, end_date, area_id, sort_key)  # è®¾ç½®redis å­—å…¸ç±»å‹çš„é”®
+        # å“ˆå¸Œç±»å‹
+        try:
+            # redis_store.hset(redis_key, page, resp_json)  # rediså­—å…¸ç±»å‹
+            # redis_store.expire(redis_key, constants.HOUSE_LIST_PAGE_REDIS_CACHE_EXPIRES)
+            # åˆ›å»ºredisç®¡é“å¯¹è±¡ å¯ä»¥ä¸€æ¬¡æ‰§è¡Œå¤šä¸ªè¯­å¥
+            pipline = redis_store.pipeline()
+            # å¼€å¯å¤šæ¡è®°å½•
+            pipline.multi()
+            pipline.hset(redis_key, page, resp_json)  # rediså­—å…¸ç±»å‹
+            pipline.expire(redis_key, constants.HOUSE_LIST_PAGE_REDIS_CACHE_EXPIRES)
+            # æ‰§è¡Œè¯­å¥
+            pipline.execute()
+        except Exception as e:
+            current_app.logger.error(e)
+
+    return resp_json, 200, {"Content-type": "application/json"}

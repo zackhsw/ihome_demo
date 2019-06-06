@@ -492,3 +492,33 @@ INFO _internal.py:122  * Restarting with stat
 WARNING _internal.py:122  * Debugger is active!
 INFO _internal.py:122  * Debugger PIN: 158-954-805
 INFO _internal.py:122  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+INFO _internal.py:122  * Restarting with stat
+WARNING _internal.py:122  * Debugger is active!
+INFO _internal.py:122  * Debugger PIN: 158-954-805
+INFO _internal.py:122  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+INFO _internal.py:122 127.0.0.1 - - [06/Jun/2019 16:53:18] "GET /api/v1.0/houses?sd=20191201&ed=20191204&aid=10&sk=new&p=1 HTTP/1.1" 404 -
+INFO _internal.py:122 127.0.0.1 - - [06/Jun/2019 16:53:56] "GET /api/v1.0/houses?sd=20191201&ed=20191204&aid=10&sk=new&p=1 HTTP/1.1" 404 -
+INFO _internal.py:122  * Restarting with stat
+WARNING _internal.py:122  * Debugger is active!
+INFO _internal.py:122  * Debugger PIN: 158-954-805
+INFO _internal.py:122  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+INFO _internal.py:122 127.0.0.1 - - [06/Jun/2019 16:54:20] "GET /api/v1.0/houses?sd=20191201&ed=20191204&aid=10&sk=new&p=1 HTTP/1.1" 404 -
+INFO _internal.py:122 127.0.0.1 - - [06/Jun/2019 16:54:54] "GET /api/v1.0/houses?sd=20191201&ed=20191204&aid=10&sk=new&p=1 HTTP/1.1" 404 -
+INFO _internal.py:122 127.0.0.1 - - [06/Jun/2019 16:56:29] "GET /api/v1.0/houses?sd=20191201&ed=20191204&aid=10&sk=new&p=1 HTTP/1.1" 404 -
+INFO _internal.py:122  * Detected change in 'E:\\datum\\ihome_demo\\ihome\\api_1_0\\__init__.py', reloading
+INFO _internal.py:122  * Restarting with stat
+INFO _internal.py:122  * Restarting with stat
+WARNING _internal.py:122  * Debugger is active!
+INFO _internal.py:122  * Debugger PIN: 158-954-805
+INFO _internal.py:122  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+ERROR houses.py:328 time data '20191201' does not match format '%Y-%m-%d'
+INFO _internal.py:122 127.0.0.1 - - [06/Jun/2019 17:01:20] "GET /api/v1.0/houses?sd=20191201&ed=20191204&aid=10&sk=new&p=1 HTTP/1.1" 200 -
+ERROR houses.py:389 'BaseQuery' object has no attribute 'query'
+INFO _internal.py:122 127.0.0.1 - - [06/Jun/2019 17:07:51] "GET /api/v1.0/houses?sd=2019-12-01&ed=2019-12-04&aid=10&sk=new&p=1 HTTP/1.1" 200 -
+INFO _internal.py:122  * Detected change in 'E:\\datum\\ihome_demo\\ihome\\api_1_0\\houses.py', reloading
+INFO _internal.py:122  * Restarting with stat
+WARNING _internal.py:122  * Debugger is active!
+INFO _internal.py:122  * Debugger PIN: 158-954-805
+INFO _internal.py:122  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+INFO _internal.py:122  * Detected change in 'E:\\datum\\ihome_demo\\ihome\\constants.py', reloading
+INFO _internal.py:122  * Restarting with stat
