@@ -15,7 +15,7 @@ from ihome.tasks.task_sms import send_sms
 @api.route("/image_codes/<image_code_id>")
 def get_image_code(image_code_id):
     """
-    获取图片验证码
+    获取图片验证码 image_code_id前端随机生成码
     :return: 验证码图片, 异常时 返回json
     """
     # 业务逻辑处理
